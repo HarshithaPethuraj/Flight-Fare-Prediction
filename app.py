@@ -8,9 +8,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
-import plotly.graph_objects as go
 import pydeck as pdk
-from datetime import date, time, timedelta
+from datetime import date, time
 
 # ============================================================
 # PAGE CONFIG
@@ -42,20 +41,8 @@ def get_theme_css(dark: bool):
             color: #f1f5f9;
         }
 
-        h2, h3, h4, h5, p, label, div {
+        h1, h2, h3, h4, h5, p, label, div {
             color: #f1f5f9 !important;
-        }
-
-        .stMarkdown {
-            color: #f1f5f9;
-        }
-
-        [data-testid="stMetricValue"] {
-            color: #f1f5f9 !important;
-        }
-
-        [data-testid="stMetricLabel"] {
-            color: #cbd5e1 !important;
         }
 
         .tip-card {
@@ -106,7 +93,6 @@ st.markdown("""
     border-radius: 20px;
     margin-bottom: 2rem;
     color: white;
-    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
 }
 
 .hero h1 {
@@ -138,21 +124,6 @@ st.markdown("""
     color: white !important;
 }
 
-.best-day-card {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    padding: 1.5rem;
-    border-radius: 20px;
-    text-align: center;
-    color: white;
-    margin: 1rem 0;
-}
-
-.tip-card {
-    padding: 1rem 1.5rem;
-    border-radius: 10px;
-    margin: 0.5rem 0;
-}
-
 .stButton button {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -160,15 +131,7 @@ st.markdown("""
     border-radius: 12px;
     padding: 0.8rem 2rem;
     font-weight: 700;
-    font-size: 1rem;
-}
-
-[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #1e3a8a 0%, #312e81 100%);
-}
-
-[data-testid="stSidebar"] * {
-    color: white !important;
+    width: 100%;
 }
 
 .footer {
@@ -223,7 +186,9 @@ def load_model():
 try:
     model = load_model()
     model_loaded = True
+
 except Exception as e:
+
     model_loaded = False
     st.error(f"❌ Failed to load model: {e}")
 
@@ -232,21 +197,35 @@ except Exception as e:
 # ============================================================
 
 AIRLINES = [
-    'Air Asia', 'Air India', 'GoAir', 'IndiGo',
-    'Jet Airways', 'Jet Airways Business',
-    'Multiple carriers', 'Multiple carriers Premium economy',
-    'SpiceJet', 'Trujet', 'Vistara',
+    'Air Asia',
+    'Air India',
+    'GoAir',
+    'IndiGo',
+    'Jet Airways',
+    'Jet Airways Business',
+    'Multiple carriers',
+    'Multiple carriers Premium economy',
+    'SpiceJet',
+    'Trujet',
+    'Vistara',
     'Vistara Premium economy'
 ]
 
 SOURCES = [
-    'Banglore', 'Chennai', 'Delhi',
-    'Kolkata', 'Mumbai'
+    'Banglore',
+    'Chennai',
+    'Delhi',
+    'Kolkata',
+    'Mumbai'
 ]
 
 DESTINATIONS = [
-    'Banglore', 'Cochin', 'Delhi',
-    'Hyderabad', 'Kolkata', 'New Delhi'
+    'Banglore',
+    'Cochin',
+    'Delhi',
+    'Hyderabad',
+    'Kolkata',
+    'New Delhi'
 ]
 
 STOP_OPTIONS = {
@@ -272,9 +251,31 @@ CITY_COORDS = {
 # FUNCTIONS
 # ============================================================
 
-def calculate_duration(dep_hour, dep_minute,
-                       arr_hour, arr_minute,
-                       next_day=False):
+def time_bucket(hour):
+
+    if 4 <= hour < 8:
+        return 'EarlyMorning'
+
+    elif 8 <= hour < 12:
+        return 'Morning'
+
+    elif 12 <= hour < 16:
+        return 'Afternoon'
+
+    elif 16 <= hour < 20:
+        return 'Evening'
+
+    else:
+        return 'Night'
+
+
+def calculate_duration(
+    dep_hour,
+    dep_minute,
+    arr_hour,
+    arr_minute,
+    next_day=False
+):
 
     dep_total = dep_hour * 60 + dep_minute
     arr_total = arr_hour * 60 + arr_minute
@@ -305,17 +306,37 @@ def build_input(
     )
 
     return pd.DataFrame([{
+
         'Airline': airline,
+
         'Source': source,
+
         'Destination': destination,
+
         'Total_Stops': stops,
+
         'Journey_Day': journey_dt.day,
+
         'Journey_Month': journey_dt.month,
+
+        'Journey_Weekday': journey_dt.weekday(),
+
+        'Is_Weekend': 1 if journey_dt.weekday() >= 5 else 0,
+
         'Dep_Hour': dep_t.hour,
+
         'Dep_Minute': dep_t.minute,
+
+        'Dep_TimeBucket': time_bucket(dep_t.hour),
+
         'Arrival_Hour': arr_t.hour,
+
         'Arrival_Minute': arr_t.minute,
+
+        'Arr_TimeBucket': time_bucket(arr_t.hour),
+
         'Duration_Mins': duration
+
     }])
 
 
@@ -325,7 +346,6 @@ def predict_price(row_df):
 
     return float(np.expm1(log_price))
 
-
 # ============================================================
 # HERO SECTION
 # ============================================================
@@ -334,8 +354,8 @@ st.markdown("""
 <div class="hero">
     <h1>✈️ Flight Fare Predictor</h1>
     <p>
-        AI-powered flight price prediction system
-        built using Machine Learning & XGBoost
+        AI-powered flight fare prediction system
+        using Machine Learning & XGBoost
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -364,7 +384,7 @@ with st.sidebar:
 - RMSE: ₹1,800
 - MAE: ₹1,113
 - Algorithm: XGBoost
-- Dataset: 10,683 flights
+- Dataset: 10,683 Flights
 """)
 
     st.markdown("---")
@@ -411,7 +431,7 @@ stops_label = st.selectbox(
 
 journey_date = st.date_input(
     "Journey Date",
-    value=date(2019, 5, 1)
+    value=date.today()
 )
 
 dep_time = st.time_input(
@@ -429,13 +449,13 @@ next_day = st.checkbox(
 )
 
 if source == destination:
+
     st.warning(
         "⚠️ Source and destination should be different."
     )
 
 predict_clicked = st.button(
-    "🔮 Predict My Flight Fare",
-    use_container_width=True
+    "🔮 Predict My Flight Fare"
 )
 
 # ============================================================
@@ -447,12 +467,14 @@ if predict_clicked:
     if source == destination:
 
         st.error(
-            "❌ Source and destination cannot be the same."
+            "❌ Source and destination cannot be same."
         )
 
     elif not model_loaded:
 
-        st.error("❌ Model not loaded.")
+        st.error(
+            "❌ Model not loaded."
+        )
 
     else:
 
@@ -487,20 +509,20 @@ if predict_clicked:
             )
 
             # ====================================================
-            # FLIGHT SUMMARY
+            # SUMMARY
             # ====================================================
 
             st.markdown("### ✈️ Flight Summary")
 
-            s1, s2 = st.columns(2)
+            c1, c2 = st.columns(2)
 
-            with s1:
+            with c1:
                 st.metric(
                     "Route",
                     f"{source} → {destination}"
                 )
 
-            with s2:
+            with c2:
                 st.metric(
                     "Stops",
                     stops_label
@@ -548,20 +570,6 @@ if predict_clicked:
         except Exception as e:
 
             st.error(f"❌ Prediction failed: {e}")
-
-# ============================================================
-# INFO SECTION
-# ============================================================
-
-st.markdown("---")
-
-st.markdown("### 🤖 About The Model")
-
-st.markdown("""
-This application predicts Indian domestic flight fares
-using a tuned XGBoost Regression model trained on
-historical airline booking data.
-""")
 
 # ============================================================
 # FOOTER
