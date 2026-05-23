@@ -341,7 +341,7 @@ with st.sidebar:
     st.markdown("### 🔗 Links")
     st.markdown("📂 [GitHub Repo](https://github.com/HarshithaPethuraj/Flight-Fare-Prediction)")
     st.markdown("📓 [View Notebook](https://github.com/HarshithaPethuraj/Flight-Fare-Prediction/blob/main/Flight_Fare_Prediction.ipynb)")
-    st.markdown("💼 [LinkedIn](https://www.linkedin.com/in/harshitha-pethuraj)")
+    st.markdown("💼 [LinkedIn](https://www.linkedin.com/in/harshitha-pethuraj-13738129b/)")
 
     st.markdown("---")
     st.caption("Built with ❤️ by Harshitha Pethuraj")
